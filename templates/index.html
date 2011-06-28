@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Clio{% endblock %}
+{% block head %}
+  <script type="text/javascript" src="/_ah/channel/jsapi"></script>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+  <script type="text/javascript">
+    client_id = '{{client_id}}';
+    channel_key = '{{channel_key}}';
+    subscriptions = [];
+    columns = ['method', 'path', 'status_code', 'wall_time', 'cpu_time'];
+
+    function add_message(message) {
+      var row = $('<tr />');
+      $('<td />', {
+        'colspan': columns.length,
+        'text': message,
+      }).appendTo(row);
+      row.appendTo('#results');
+    }
+
+    $(document).ready(function () {
+      channel = new goog.appengine.Channel(channel_key);
+      socket = channel.open();
+      socket.onopen = function() {
+        add_message('Channel established.');
+      };
+      socket.onmessage = function(data) {
+        var row = $('<tr />');
+        for(var i = 0; i < columns.length; i++) {
+          $('<td />', {
+            'text': data.data[columns[i]],
+          }).appendTo(row);
+        }
+        row.appendTo('#results');
+      };
+      socket.onerror = function(error) {
+        add_message('Channel error: ' + error.description);
+      };
+      socket.onclose = function() {
+        add_message('Channel closed.');
+      };
+
+      $("#querybutton").click(function(event) {
+        var subdata = {
+          'query': $("#query").val(),
+          'client_id': client_id,
+        };
+        $.post('{{config.BASE_URL}}/subscribe', subdata, function(data) {
+          subscriptions.push(data);
+          add_message('Subscription added with ID ' + data);
+        });
+      });
+    });
+  </script>
+  <style type="text/css">
+    #results {
+      border: 1px solid black;
+      margin-bottom: 2em;
+    }
+  </style>
+{% endblock %}
+{% block body %}
+  <h1>Clio Console</h1>
+  <table>
+    <thead>
+      <tr><th>Method</th><th>Path</th><th>Status Code</th><th>Wall Time</th><th>CPU Time</th></tr>
+    </thead>
+    <tbody id="results">
+    </tbody>
+  </table>
+  </table>
+  <div id="querybox">
+    Enter query:
+    <input type="text" id="query" />
+    <input type="button" id="querybutton" value="Submit" />
+  </div>
+{% endblock %}

@@ -1,0 +1,9 @@
+application: clio-test
+runtime: python
+version: main
+api_version: 1
+
+
+handlers:
+- url: /_clio/.*
+  script: handler.py

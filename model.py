@@ -1,9 +1,9 @@
-from google.appengine.api import quota
 from google.appengine.ext import db
-import random
 
 
 class RequestRecord(db.Model):
+  """Encapsulates information for a request log record."""
+
   method = db.StringProperty(required=True)
   path = db.StringProperty(required=True)
   request_headers = db.StringListProperty(required=True)
@@ -11,19 +11,21 @@ class RequestRecord(db.Model):
   status_text = db.StringProperty(required=True)
   response_headers = db.StringListProperty(required=True)
   wall_time = db.IntegerProperty(required=True)
-  api_time = db.IntegerProperty(required=True)
+  cpu_time = db.IntegerProperty(required=True)
   random = db.FloatProperty(required=True)
 
-  @classmethod
-  def create(cls, request, response, elapsed):
-    status_code, status_text = response.status.split(' ', 1)
-    return cls(
-        method=request.method,
-        path=request.path_qs,
-        request_headers=['%s: %s' % x for x in request.headers.items()],
-        status_code=status_code,
-        status_text=status_text,
-        response_headers=['%s: %s' % x for x in response.headers.items()],
-        wall_time=elapsed,
-        api_time=quota.get_request_cpu_usage(),
-        random=random.random())
+  def to_json(self):
+    """Returns a dict containing the relevant information from this record.
+    
+    Note that the return value is not a JSON string, but rather a dict that can
+    be passed to a JSON library for encoding."""
+    return dict((k, v.__get__(self, self.__class__))
+                for k, v in self.properties.iteritems())
+
+
+class Subscription(db.Model):
+  """Provides information on a client subscription to a filtered log feed."""
+
+  client_id = db.StringProperty(required=True)
+  created = db.DateTimeProperty(required=True, auto_now=True)
+  expires = db.DateTimeProperty(required=True)
