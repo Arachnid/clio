@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 
 from django.utils import simplejson
@@ -33,8 +34,7 @@ class SubscribeHandler(webapp.RequestHandler):
 
   def post(self):
     sub = model.Subscription(
-        client_id=self.request.POST['client_id'],
-        expires=datetime.datetime.now() + config.SUBSCRIPTION_TIMEOUT)
+        client_id=self.request.POST['client_id'])
     sub.put()
     prospective_search.subscribe(
         model.RequestRecord,
@@ -53,28 +53,20 @@ class MatchHandler(webapp.RequestHandler):
     record_data = record.to_json()
 
     # Fetch the set of subscribers to send this record to
-    import logging
-    logging.warn(self.request.get_all('id'))
     subscriber_keys = map(db.Key, self.request.get_all('id'))
     subscribers = db.get(subscriber_keys)
 
-    import logging
-    logging.warn("Handling subscription message for %r: %r", subscriber_keys, record_data)
-
-    for subscriber in subscribers:
-      # If the subscription has expired or been deleted from the datastore,
-      # delete it
-      if not subscriber or subscriber.expires < datetime.datetime.now():
-        logging.warn("Subscription expired")
+    for subscriber_key, subscriber in zip(subscriber_keys, subscribers):
+      # If the subscription has been deleted from the datastore, delete it
+      # from the matcher API.
+      if not subscriber:
+        logging.error("Subscription %s deleted!", subscriber_key)
         prospective_search.unsubscribe(model.RequestRecord, subscriber.key())
-        if subscriber:
-          subscriber.delete()
       else:
         data = simplejson.dumps({
             'subscription_key': str(subscriber.key()),
             'data': record_data,
         })
-        logging.warn("Sending message: %s", data)
         channel.send_message(subscriber.client_id, data)
 
 

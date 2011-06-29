@@ -28,4 +28,3 @@ class Subscription(db.Model):
 
   client_id = db.StringProperty(required=True)
   created = db.DateTimeProperty(required=True, auto_now=True)
-  expires = db.DateTimeProperty(required=True)
