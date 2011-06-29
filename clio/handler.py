@@ -39,7 +39,8 @@ class SubscribeHandler(webapp.RequestHandler):
     prospective_search.subscribe(
         model.RequestRecord,
         self.request.POST['query'],
-        str(sub.key()))
+        str(sub.key()),
+        lease_duration_sec=config.SUBSCRIPTION_TIMEOUT.seconds)
     self.response.out.write(str(sub.key()))
 
 
