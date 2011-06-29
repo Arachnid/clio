@@ -64,7 +64,7 @@ class MatchHandler(webapp.RequestHandler):
         prospective_search.unsubscribe(model.RequestRecord, subscriber.key())
       else:
         data = simplejson.dumps({
-            'subscription_key': str(subscriber.key()),
+            'subscription_key': str(subscriber_key),
             'data': record_data,
         })
         channel.send_message(subscriber.client_id, data)
