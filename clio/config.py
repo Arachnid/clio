@@ -16,5 +16,9 @@ class ConfigDefaults(object):
   QUEUE_NAME = 'default'
   SUBSCRIPTION_TIMEOUT = datetime.timedelta(hours=2)
 
+  def should_record(environ):
+    """Determines if a given request should be recorded."""
+    return True
+
 
 config = lib_config.register('clio', ConfigDefaults.__dict__)

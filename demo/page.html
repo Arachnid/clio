@@ -1,0 +1,20 @@
+<html>
+<head>
+  <title>Clio demo app</title>
+</head>
+<body>
+  <h1>Clio demo page</h1>
+  <p>This is a demo page for testing clio.</p>
+
+  <table>
+    <tr><th>Method</th><td>{{request.method}}</td></tr>
+    <tr><th>Path</th><td>{{request.path}}</td></tr>
+    <tr><th>Request Headers</th><td>{{request.headers}}</td></tr>
+    <tr><th>Response Headers</th><td>{{response.headers}}</td></tr>
+  </table>
+
+  <form method="POST" action="{{request.path}}">
+    <input type="submit" value="POST to this page" />
+  </form>
+</body>
+</html>

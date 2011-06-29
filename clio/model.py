@@ -20,7 +20,7 @@ class RequestRecord(db.Model):
     Note that the return value is not a JSON string, but rather a dict that can
     be passed to a JSON library for encoding."""
     return dict((k, v.__get__(self, self.__class__))
-                for k, v in self.properties.iteritems())
+                for k, v in self.properties().iteritems())
 
 
 class Subscription(db.Model):

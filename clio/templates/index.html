@@ -24,7 +24,8 @@
       socket.onopen = function() {
         add_message('Channel established.');
       };
-      socket.onmessage = function(data) {
+      socket.onmessage = function(message) {
+        var data = jQuery.parseJSON(message.data)
         var row = $('<tr />');
         for(var i = 0; i < columns.length; i++) {
           $('<td />', {
@@ -53,9 +54,8 @@
     });
   </script>
   <style type="text/css">
-    #results {
-      border: 1px solid black;
-      margin-bottom: 2em;
+    tr {
+      border-bottom: 1px solid black;
     }
   </style>
 {% endblock %}

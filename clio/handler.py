@@ -4,12 +4,13 @@ import os
 from django.utils import simplejson
 from google.appengine.api import channel
 from google.appengine.api import prospective_search
+from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
 
-from config import config
-import model
+from clio.config import config
+from clio import model
 
 
 class IndexHandler(webapp.RequestHandler):
@@ -51,19 +52,28 @@ class MatchHandler(webapp.RequestHandler):
     record_data = record.to_json()
 
     # Fetch the set of subscribers to send this record to
+    import logging
+    logging.warn(self.request.get_all('id'))
     subscriber_keys = map(db.Key, self.request.get_all('id'))
-    subscribers = db.get(subscriber_ids)
+    subscribers = db.get(subscriber_keys)
+
+    import logging
+    logging.warn("Handling subscription message for %r: %r", subscriber_keys, record_data)
 
     for subscriber in subscribers:
-      # If the subscription has expired, delete it
-      if subscriber.expires < datetime.datetime.now():
+      # If the subscription has expired or been deleted from the datastore,
+      # delete it
+      if not subscriber or subscriber.expires < datetime.datetime.now():
+        logging.warn("Subscription expired")
         prospective_search.unsubscribe(model.RequestRecord, subscriber.key())
-        subscriber.delete()
+        if subscriber:
+          subscriber.delete()
       else:
         data = simplejson.dumps({
-            'subscription_key': subscriber.key(),
+            'subscription_key': str(subscriber.key()),
             'data': record_data,
         })
+        logging.warn("Sending message: %s", data)
         channel.send_message(subscriber.client_id, data)
 
 

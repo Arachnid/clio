@@ -6,4 +6,6 @@ api_version: 1
 
 handlers:
 - url: /_clio/.*
-  script: handler.py
+  script: clio/handler.py
+- url: /.*
+  script: main.py
