@@ -7,5 +7,10 @@ api_version: 1
 handlers:
 - url: /_clio/.*
   script: clio/handler.py
+- url: /_ah/channel/.*
+  script: clio/handler.py
 - url: /.*
   script: main.py
+
+inbound_services:
+- channel_presence

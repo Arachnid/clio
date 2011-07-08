@@ -61,7 +61,7 @@ class MatchHandler(webapp.RequestHandler):
       # from the matcher API.
       if not subscriber:
         logging.error("Subscription %s deleted!", subscriber_key)
-        prospective_search.unsubscribe(model.RequestRecord, subscriber.key())
+        prospective_search.unsubscribe(model.RequestRecord, subscriber_key)
       else:
         data = simplejson.dumps({
             'subscription_key': str(subscriber_key),
@@ -69,11 +69,32 @@ class MatchHandler(webapp.RequestHandler):
         })
         channel.send_message(subscriber.client_id, data)
 
+def handle_disconnection(client_id):
+  """Handles a channel disconnection for a Clio channel."""
+  # Find all their subscriptions and delete them.
+  q = model.Subscription.all().filter('client_id =', client_id)
+  subscriptions = q.fetch(1000)
+  for sub in subscriptions:
+    prospective_search.unsubscribe(model.RequestRecord, str(sub.key()))
+  db.delete(subscriptions)
+
+
+class ChannelConnectHandler(webapp.RequestHandler):
+  def post(self):
+    pass
+
+
+class ChannelDisconnectHandler(webapp.RequestHandler):
+  def post(self):
+    handle_disconnection(self.request.get('from'))
+
 
 application = webapp.WSGIApplication([
     (config.BASE_URL + '/', IndexHandler),
     (config.BASE_URL + '/subscribe', SubscribeHandler),
     (config.QUEUE_URL, MatchHandler),
+    ('/_ah/channel/connected/', ChannelConnectHandler),
+    ('/_ah/channel/disconnected/', ChannelDisconnectHandler),
 ])
 
 
